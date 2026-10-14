@@ -1,0 +1,46 @@
+﻿# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# PHP dependencies
+/vendor/
+
+# Node.js dependencies
+/node_modules/
+
+# Compiled frontend assets
+/public/build/
+/public/hot
+
+# Laravel runtime files
+/storage/*.key
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/bootstrap/cache/*.php
+
+# Test and coverage output
+/coverage/
+/.phpunit.cache/
+/.nyc_output/
+
+# IDE and operating-system files
+/.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary files and logs
+*.log
+*.tmp
+
+# Local database files
+*.sqlite
+*.sqlite3
+
+# Build and tool caches
+.phpunit.result.cache
+.php-cs-fixer.cache
+.phpactor.json
