@@ -1,0 +1,270 @@
+// =============================================================================
+// TestimonialHub — Prisma schema
+//
+// Conventions:
+//  - Every tenant-owned table has a `userId` FK to `users.id`.
+//  - All IDs are CUIDs (collision-resistant, sortable, URL-safe).
+//  - All timestamps are stored as UTC `DateTime`.
+//  - Money is NOT stored; Stripe is the source of truth for billing state.
+//  - No soft-delete columns; we cascade on owner delete and rely on Stripe
+//    Customer Portal for account-level cancellation flows.
+//
+//  Stage 3 (this file) does NOT create migrations. Apply with:
+//      npx prisma migrate dev --name init
+//  after the schema has been reviewed and approved.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+  // Output to a custom path so it can be safely gitignored and so the
+  // generated client is co-located with the rest of the source tree.
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// USERS & AUTH
+// -----------------------------------------------------------------------------
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  emailVerifiedAt DateTime?
+  passwordHash    String
+  name            String?
+  // Incremented on logout-all, password change, and email change.
+  // The JWT session callback re-checks this on every protected request.
+  tokenVersion    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  collections       Collection[]
+  widgets           Widget[]
+  subscriptions     Subscription[]
+  notificationPrefs NotificationPreference?
+  notificationReads NotificationRead[]
+  sessions          UserSession[]
+
+  @@index([email])
+  @@index([createdAt])
+}
+
+// Long-lived device sessions so we can show "active devices" and selectively
+// revoke them. Auth.js v5 uses JWT by default; this table is supplementary.
+model UserSession {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent  String?
+  ipAddress  String?
+  lastSeenAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  @@index([userId])
+  @@index([lastSeenAt])
+}
+
+// Application-managed verification & password-reset tokens. We do NOT use the
+// Auth.js adapter's built-in tables; we own the lifecycle for stronger
+// guarantees (SHA-256 hash at rest, single-use, atomic consume).
+model VerificationToken {
+  id         String    @id @default(cuid())
+  // SHA-256 hex of the raw token. The raw value only ever appears in the URL.
+  tokenHash  String    @unique
+  identifier String // email address this token is bound to
+  // `email_verification` | `password_reset` | `email_change`
+  purpose    String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([identifier, purpose])
+  @@index([expiresAt])
+}
+
+// -----------------------------------------------------------------------------
+// COLLECTIONS & TESTIMONIALS
+// -----------------------------------------------------------------------------
+
+model Collection {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?   @db.Text
+  // Unique URL slug. Format: `^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])?$`
+  slug        String    @unique
+  // Branding
+  brandColor  String    @default("#4f46e5")
+  logoPath    String?
+  // "light" | "dark" | "auto" — UI uses class strategy.
+  theme       String    @default("auto")
+  // If true, the owner can replace the public submitter email field label,
+  // but the email itself is never shown publicly. (Reserved for future use.)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  testimonials Testimonial[]
+  widgets      Widget[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Testimonial {
+  id             String     @id @default(cuid())
+  collectionId   String
+  collection     Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  // Submitter-facing fields. The email is private; never returned in any
+  // public or widget response.
+  submitterName  String
+  submitterEmail String
+  company        String?
+  role           String?
+  // Plain-text body. Length is enforced at the application layer.
+  body           String     @db.Text
+  // 1..5
+  rating         Int
+  // "pending" | "approved" | "rejected"
+  status         String     @default("pending")
+  // Free-form reviewer note, owner-only.
+  internalNotes  String?    @db.Text
+  approvedAt     DateTime?
+  approvedBy     String?
+  rejectedAt     DateTime?
+  rejectedBy     String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([collectionId, status])
+  @@index([collectionId, createdAt])
+  @@index([status])
+}
+
+// -----------------------------------------------------------------------------
+// WIDGETS (embeddable public displays)
+// -----------------------------------------------------------------------------
+
+model Widget {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  // "grid" | "carousel"
+  layout       String     @default("grid")
+  // "newest" | "highest_rating"
+  sortBy       String     @default("newest")
+  // URL-safe 32-char token used in the iframe src. Rotation invalidates old URLs.
+  publicToken  String     @unique
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  lastViewedAt DateTime?
+
+  @@index([userId])
+  @@index([collectionId])
+  @@index([isActive])
+}
+
+// -----------------------------------------------------------------------------
+// BILLING (Stripe-synchronized, source of truth is Stripe)
+// -----------------------------------------------------------------------------
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeCustomerId     String    @unique
+  stripeSubscriptionId String?   @unique
+  // "free" | "active" | "past_due" | "graced" | "cancelled" | "expired"
+  // See PRD §3.6 and Delta FR-PLAN-011/012 for the transition rules.
+  state                String    @default("free")
+  // When the failed-payment grace period started. NULL when not in grace.
+  graceStartedAt       DateTime?
+  // The timestamp at which the account will downgrade to Free if not resolved.
+  graceEndsAt          DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  // Last price ID seen on the subscription. Used to detect plan changes.
+  priceId              String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([state])
+  @@index([graceEndsAt])
+}
+
+// -----------------------------------------------------------------------------
+// NOTIFICATIONS
+// -----------------------------------------------------------------------------
+
+model Notification {
+  id        String   @id @default(cuid())
+  // Recipient user id. Recipients are computed at write time so we can
+  // support fan-out targets (e.g., owner + co-admins) in the future.
+  userId    String
+  // "new_testimonial" | "testimonial_approved" | "subscription_payment_failed" | ...
+  type      String
+  // Title + body are denormalized for in-app rendering; the email body is
+  // generated at send time and not stored.
+  title     String
+  body      String   @db.Text
+  // JSON payload: e.g. { testimonialId, collectionId }.
+  data      Json?
+  createdAt DateTime @default(now())
+
+  reads NotificationRead[]
+
+  @@index([userId, createdAt])
+  @@index([userId, type])
+}
+
+model NotificationRead {
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now())
+
+  @@id([notificationId, userId])
+  @@index([userId])
+}
+
+model NotificationPreference {
+  userId     String   @id
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Per-type email opt-in. Account-security and billing emails are always on.
+  // Map of notification-type -> boolean.
+  emailPrefs Json     @default("{}")
+  updatedAt  DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// STRIPE WEBHOOK IDEMPOTENCY
+// -----------------------------------------------------------------------------
+
+model WebhookEvent {
+  id            String    @id @default(cuid())
+  // Stripe event id (evt_...). UNIQUE across the whole system.
+  stripeEventId String    @unique
+  type          String
+  // "received" | "processing" | "completed" | "failed"
+  status        String    @default("received")
+  attempts      Int       @default(0)
+  // Truncated error message; never store the full event payload here.
+  lastError     String?   @db.Text
+  receivedAt    DateTime  @default(now())
+  processedAt   DateTime?
+
+  @@index([status])
+  @@index([receivedAt])
+}

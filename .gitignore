@@ -44,3 +44,61 @@ Desktop.ini
 .phpunit.result.cache
 .php-cs-fixer.cache
 .phpactor.json
+
+# --- TestimonialHub (Next.js / Node.js) additions ---
+# Preserve: .git/, .puku-cli/, docs/, README.md, .env.example
+# Node + Next.js runtime and build output
+node_modules/
+.next/
+out/
+.turbo/
+.vercel/
+next-env.d.ts
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+/prisma/.cache/
+/prisma/.migration_preview.sql
+
+# Local secrets and env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# Test and coverage output
+/coverage/
+/playwright-report/
+/test-results/
+/.vitest-cache/
+/.nyc_output/
+/coverage/lcov.info
+/blob-report/
+/playwright/.cache/
+
+# IDE and editor
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/workspace.xml
+*.swp
+*.swo
+
+# OS junk (Windows / macOS / Linux)
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# Logs
+*.log
+logs/

@@ -1,0 +1,63 @@
+{
+  "name": "testimonialhub",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "predev": "node scripts/predev.js",
+    "dev": "next dev",
+    "prebuild": "node scripts/prebuild.js",
+    "build": "next build",
+    "prestart": "node scripts/prestart.js",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:format": "prisma format"
+  },
+  "dependencies": {
+    "@auth/core": "0.41.3",
+    "@auth/prisma-adapter": "2.11.3",
+    "@prisma/client": "6.19.3",
+    "bcryptjs": "3.0.3",
+    "date-fns": "4.4.0",
+    "dotenv": "^16.4.7",
+    "lucide-react": "0.499.0",
+    "nanoid": "5.1.16",
+    "next": "15.5.27",
+    "next-auth": "5.0.0-beta.32",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "recharts": "2.15.4",
+    "resend": "4.8.0",
+    "sharp": "0.33.5",
+    "stripe": "18.5.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "3.3.1",
+    "@playwright/test": "1.64.1",
+    "@types/bcryptjs": "2.4.6",
+    "@types/node": "22.20.5",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@vitest/ui": "2.1.9",
+    "autoprefixer": "10.4.27",
+    "eslint": "9.39.5",
+    "eslint-config-next": "15.5.27",
+    "happy-dom": "15.11.7",
+    "postcss": "8.4.49",
+    "prisma": "6.19.3",
+    "tailwindcss": "3.4.19",
+    "tsx": "4.23.15",
+    "typescript": "5.6.3",
+    "vitest": "2.1.9"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

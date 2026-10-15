@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 255 255 255;
+    --foreground: 17 24 39;
+  }
+
+  .dark {
+    --background: 17 24 39;
+    --foreground: 243 244 246;
+  }
+
+  html,
+  body {
+    @apply h-full;
+  }
+
+  body {
+    @apply bg-[rgb(var(--background))] text-[rgb(var(--foreground))] antialiased;
+  }
+
+  /* Defensive SVG sizing: see comment in components for rationale. */
+  svg:not([width]):not([height]) {
+    width: 1em;
+    height: 1em;
+  }
+}
+
+/*
+ * Wall of Love: when a user opens a direct /wall/[slug]#review-{id}
+ * link, the :target pseudo-class highlights the matching card with a
+ * subtle ring so the visitor immediately sees which review was
+ * referenced. Combined with `scroll-margin-top` below, the browser
+ * scrolls the card into view with a comfortable top gap (so it
+ * doesn't sit flush under the page header).
+ */
+[ data-wall-highlight="true" ]:target,
+[ data-testid="wall-card" ]:target {
+  scroll-margin-top: 5rem;
+  border-radius: 0.75rem;
+  outline: 2px solid rgb(var(--brand) / 0.9);
+  outline-offset: 2px;
+  transition: outline-color 200ms ease-out;
+}
+
+@layer components {
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-950;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply btn bg-brand-600 text-white hover:bg-brand-700 focus:ring-brand-500;
+  }
+  .btn-secondary {
+    @apply btn bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-400 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700;
+  }
+  .card {
+    @apply rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900;
+  }
+  .input {
+    @apply w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900;
+  }
+  .label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
+  }
+}

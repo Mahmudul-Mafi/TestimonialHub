@@ -94,9 +94,9 @@ The initial release excludes video testimonials, bank or third-party testimonial
 
 **FR-AUTH-001:** The system MUST allow users to register using email and password.
 
-**FR-AUTH-002:** The system MUST provide email verification.
+**FR-AUTH-002:** _Deferred to a future release._ The system MUST provide email verification. The mechanism is implemented in `src/lib/auth/verification-tokens.ts` and is callable via `/api/auth/verify-email` and the `/verify-email` page, but is not invoked from the registration flow in the current TestimonialHub MVP. `emailVerifiedAt` is set at account creation and is a bookkeeping field, not a proof of email ownership.
 
-**FR-AUTH-003:** Users MUST verify their email before accessing collection management functionality.
+**FR-AUTH-003:** _Deferred to a future release._ Users MUST verify their email before accessing collection management functionality. In the current MVP, users access the dashboard immediately after registration. The `requireUser()` chokepoint retains the `redirect("/verify-email")` branch as defense-in-depth so a future re-enable of verification does not require changes to the chokepoint.
 
 **FR-AUTH-004:** The system MUST provide forgotten-password recovery through email.
 

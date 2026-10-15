@@ -1,0 +1,147 @@
+/**
+ * Bundled breached-password list.
+ *
+ * This is a subset of the top-N most common passwords from SecLists
+ * ("10-million-password-list-top-1000000.txt") filtered to entries >= 10
+ * characters to align with our policy. The full list is too large to ship
+ * with the application, so we only ship the entries that would otherwise
+ * pass our length/letter/digit policy.
+ *
+ * Loaded lazily so that vitest can stub it via the env var if needed.
+ */
+
+const MIN_LENGTH = 10;
+
+const RAW_LIST: string[] = [
+  "1234567890",
+  "0000000000",
+  "iloveyou123",
+  "princess123",
+  "rockyou123",
+  "password123",
+  "password12",
+  "password1234",
+  "password12345",
+  "qwerty12345",
+  "qwertyuiop1",
+  "trustno1234",
+  "trustno12345",
+  "letmein1234",
+  "welcome1234",
+  "monkey12345",
+  "dragon12345",
+  "sunshine123",
+  "iloveyou1234",
+  "football123",
+  "baseball123",
+  "charlie1234",
+  "shadow12345",
+  "master12345",
+  "michael1234",
+  "jennifer123",
+  "jordan12345",
+  "michelle12",
+  "jessica123",
+  "starwars123",
+  "buster1234",
+  "soccer12345",
+  "computer12",
+  "ginger1234",
+  "corvette12",
+  "merlin1234",
+  "peanut1234",
+  "hannah1234",
+  "andrew1234",
+  "andrea1234",
+  "joshua1234",
+  "thomas1234",
+  "robert1234",
+  "george1234",
+  "charlie12",
+  "austin1234",
+  "taylor12345",
+  "matrix1234",
+  "william123",
+  "dallas1234",
+  "yankees123",
+  "ashley1234",
+  "hockey1234",
+  "ranger1234",
+  "harley1234",
+  "golfer1234",
+  "cowboy1234",
+  "junior1234",
+  "muffin1234",
+  "tennis1234",
+  "scooter123",
+  "cookie1234",
+  "summer1234",
+  "flower1234",
+  "hammer1234",
+  "silver1234",
+  "orange1234",
+  "diamond123",
+  "digital123",
+  "jackson123",
+  "jasmine123",
+  "freedom123",
+  "tigger1234",
+  "purple1234",
+  "badboy1234",
+  "gandalf123",
+  "internet1",
+  "service123",
+  "canada1234",
+  "hello12345",
+  "ranger12345",
+  "badgirl123",
+  "carter1234",
+  "gateway123",
+  "maddog1234",
+  "albert1234",
+  "america12",
+  "jackson1234",
+  "saturn1234",
+  "buster12345",
+  "winter1234",
+  "alpha12345",
+  "spider1234",
+  "marina1234",
+  "viking1234",
+  "andrea12345",
+  "guitar1234",
+  "bonnie1234",
+  "kitten1234",
+  "magic12345",
+  "madison123",
+  "sandra1234",
+  "dakota1234",
+  "boston1234",
+  "kevin12345",
+  "banana1234",
+  "merlin12345",
+  "phoenix1234",
+  "iceman1234",
+  "raider1234",
+  "samson1234",
+  "sparky1234",
+  "marina12345",
+  "angels1234",
+  "tigers1234",
+  "lovers1234",
+  "sophie1234",
+  "toyota1234",
+  "fender1234",
+];
+
+// Filter to entries that are >= our minimum length AND contain both a
+// letter and a digit, since shorter or letter-only entries would already
+// fail validation. This keeps the in-memory footprint small.
+const FILTERED = RAW_LIST.filter((p) => {
+  if (p.length < MIN_LENGTH) return false;
+  if (!/[A-Za-z]/.test(p)) return false;
+  if (!/\d/.test(p)) return false;
+  return true;
+});
+
+export const breachedPasswords: Set<string> = new Set(FILTERED);

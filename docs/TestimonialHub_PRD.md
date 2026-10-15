@@ -40,7 +40,7 @@ Make it easy for individuals and organizations to collect trustworthy written te
 
 The MVP should meet the following criteria:
 
-- A user can register, verify their email, sign in, and create a collection.
+- A user can register, sign in, and create a collection.
 - A visitor can submit a testimonial without creating an account.
 - New submissions remain private until approved.
 - Owners can approve, reject, and delete testimonials.
@@ -70,7 +70,9 @@ The MVP will not restrict registration based on profession, industry, or organiz
 
 ### 5.1 Account Owner
 
-An authenticated, email-verified user who can manage their own collections, testimonials, widgets, branding, notifications, exports, and subscription.
+An authenticated user who can manage their own collections, testimonials, widgets, branding, notifications, exports, and subscription.
+
+> **MVP note:** Email verification is intentionally **disabled** in the current TestimonialHub MVP. New users are created and signed in immediately on registration; `emailVerifiedAt` is set at account creation and is a bookkeeping field rather than a proof of email ownership. The verification-token mechanism and `/verify-email` page are preserved for a future release and remain callable. See the registration route's docblock for the security trade-offs accepted in the current build.
 
 ### 5.2 Submitter
 
@@ -90,7 +92,7 @@ Background jobs and integrations responsible for email delivery, CAPTCHA verific
 
 **Authentication and account management**
 - Email/password registration, login, and logout.
-- Email verification before dashboard and collection management access.
+- Email verification (reserved for a future release; not enforced in the current MVP — see the MVP note in §5.1).
 - Password recovery through secure email links.
 - Account settings and account deletion.
 
@@ -208,13 +210,13 @@ When an account transitions from Paid to Free:
 ### 8.1 Owner Onboarding
 
 1. User registers with email and password.
-2. System sends a verification email.
-3. User verifies the email address.
-4. User accesses the dashboard.
-5. User creates a collection.
-6. User configures the collection's title, description, slug, and branding.
-7. User shares the public submission URL or embeds the submission form.
-8. User receives notifications when testimonials are submitted.
+2. User accesses the dashboard immediately (current MVP; email verification is disabled).
+3. User creates a collection.
+4. User configures the collection's title, description, slug, and branding.
+5. User shares the public submission URL or embeds the submission form.
+6. User receives notifications when testimonials are submitted.
+
+> **Future re-enable of verification:** when email verification is re-enabled, insert a verification step between steps 1 and 2 above, and the unverified user will be redirected to `/verify-email` by `requireUser()` until the link is confirmed.
 
 ### 8.2 Submit a Testimonial
 
@@ -256,7 +258,7 @@ When an account transitions from Paid to Free:
 
 The SRS will define the detailed, testable requirements. The product must:
 
-- Authenticate users and enforce email verification.
+- Authenticate users. (Email verification is currently deferred to a future release — see §5.1.)
 - Enforce ownership on every account-owned resource.
 - Support collection creation, editing, deletion, and unique public URLs.
 - Validate public submissions and initially mark them Pending.
@@ -372,7 +374,7 @@ The Free testimonial-limit behavior is particularly important: the implementatio
 ### Phase 1 — Foundation
 - Initialize the repository and Laravel application.
 - Configure Inertia.js, React, Tailwind CSS, and MySQL.
-- Implement authentication and email verification.
+- Implement authentication. (Email verification is reserved for a future release.)
 - Configure Pest and continuous integration.
 - Establish authorization and coding conventions.
 
